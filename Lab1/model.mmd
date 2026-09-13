@@ -1,0 +1,36 @@
+erDiagram
+    client ||--|| cinema : interacts
+    client ||--|{ payment_system : uses
+    client ||--o| booking_website : browses
+    cinema ||--|{ payment_system : supports
+    cinema ||--o| booking_website : owns
+    booking_website o|--|{ payment_system : integrates
+
+    client {
+        uuid id PK
+        float money
+        string genre_preferences
+        boolean interestToBuy
+    }
+    cinema {
+        uuid id PK
+        string quality
+        int seats_amount
+        float prices
+        string genres_spectrum
+        boolean availability
+        boolean studentDiscount
+    }
+    payment_system {
+        uuid id PK
+        boolean card
+        boolean cash_at_desk
+        string payment_confirmation_system
+        string transaction_security
+    }
+    booking_website {
+        int id PK
+        boolean convenient_interface
+        boolean fast_website_work
+        boolean attractive_design
+    }
