@@ -1,9 +1,11 @@
 erDiagram
-    client ||--|| cinema : interacts
-    client ||--o| booking_website : browses
-    cinema ||--o| booking_website : owns
-    client ||--|{ payment_system : uses
+    cinema ||--|| client : interacts
     cinema ||--|{ payment_system : supports
+    cinema ||--o| booking_website : owns
+    
+    client ||--|{ payment_system : uses
+    client ||--o| booking_website : browses
+    
     booking_website o|--|{ payment_system : integrates
 
     client {
