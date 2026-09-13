@@ -1,14 +1,4 @@
 erDiagram
-    %% Будуємо периметр
-    client ||--o| booking_website : browses
-    booking_website o|--|{ payment_system : integrates
-    payment_system }|--|| cinema : supports
-    cinema ||--|| client : interacts
-
-    %% Додаємо внутрішні перехресні зв'язки
-    client ||--|{ payment_system : uses
-    cinema ||--o| booking_website : owns
-
     client {
         uuid id PK
         uuid cinema_id FK
@@ -16,14 +6,13 @@ erDiagram
         string genre_preferences
         boolean interest_to_buy
     }
-    cinema {
+    booking_website {
         uuid id PK
-        string *quality
-        int *seats_amount
-        float *prices
-        string genres_spectrum
-        boolean availability
-        boolean student_discount
+        uuid client_id FK
+        uuid cinema_id FK
+        boolean *convenient_interface
+        boolean *fast_website_work
+        boolean attractive_design
     }
     payment_system {
         uuid id PK
@@ -35,11 +24,19 @@ erDiagram
         string *payment_confirmation_system
         string *transaction_security
     }
-    booking_website {
+    cinema {
         uuid id PK
-        uuid client_id FK
-        uuid cinema_id FK
-        boolean *convenient_interface
-        boolean *fast_website_work
-        boolean attractive_design
+        string *quality
+        int *seats_amount
+        float *prices
+        string genres_spectrum
+        boolean availability
+        boolean student_discount
     }
+
+    client ||--o| booking_website : browses
+    cinema ||--o| booking_website : owns
+    booking_website o|--|{ payment_system : integrates
+    client ||--|{ payment_system : uses
+    cinema ||--|{ payment_system : supports
+    client ||--|| cinema : interacts
