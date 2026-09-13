@@ -1,12 +1,13 @@
 erDiagram
-    cinema ||--|| client : interacts
-    cinema ||--|{ payment_system : supports
-    cinema ||--o| booking_website : owns
-    
-    client ||--|{ payment_system : uses
+    %% Будуємо периметр
     client ||--o| booking_website : browses
-    
     booking_website o|--|{ payment_system : integrates
+    payment_system }|--|| cinema : supports
+    cinema ||--|| client : interacts
+
+    %% Додаємо внутрішні перехресні зв'язки
+    client ||--|{ payment_system : uses
+    cinema ||--o| booking_website : owns
 
     client {
         uuid id PK
