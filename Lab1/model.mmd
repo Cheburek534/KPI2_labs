@@ -1,45 +1,40 @@
 erDiagram
-    booking_website o|--|{ payment_system : integrates
-    
-    client ||--|| cinema : interacts
-    
-    client ||--o| booking_website : browses
-    cinema ||--o| booking_website : owns
-    
-    client ||--|{ payment_system : uses
-    cinema ||--|{ payment_system : supports
+    movie ||--o{ session : scheduled_as
+    hall ||--o{ session : hosts
+    session ||--o{ ticket : includes
+    client ||--o{ ticket : buys
 
     client {
         uuid id PK
-        uuid cinema_id FK
-        float *money
-        string genre_preferences
-        boolean interest_to_buy
+        string *full_name
+        string *email
+        float money
     }
-    cinema {
+    movie {
         uuid id PK
-        string *quality
-        int *seats_amount
-        float *prices
-        string genres_spectrum
-        boolean availability
-        boolean student_discount
+        string *title
+        string *genre
+        int *duration_minutes
+        int age_rating
     }
-    payment_system {
+    hall {
         uuid id PK
+        string *name
+        int *capacity
+        boolean has_3d
+    }
+    session {
+        uuid id PK
+        uuid movie_id FK
+        uuid hall_id FK
+        datetime *start_time
+        string format
+    }
+    ticket {
+        uuid id PK
+        uuid session_id FK
         uuid client_id FK
-        uuid cinema_id FK
-        uuid booking_website_id FK
-        boolean *card
-        boolean *cash_at_desk
-        string *payment_confirmation_system
-        string *transaction_security
-    }
-    booking_website {
-        uuid id PK
-        uuid client_id FK
-        uuid cinema_id FK
-        boolean *convenient_interface
-        boolean *fast_website_work
-        boolean attractive_design
+        int *seat_number
+        float *price
+        boolean is_paid
     }
