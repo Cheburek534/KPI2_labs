@@ -484,3 +484,47 @@ erDiagram
         boolean attractive_design
     }
 Копіюй цей варіант у свій файл. Тепер вимога щодо категоричної відсутності візуального накладання ліній виконана на 100%. Роби коміт fix: force planar graph layout to completely eliminate edge crossings і переходь до складання DEFENSE.md для здачі.
+
+Ось фінальний код для model.mmd, який включає нову сутність та зберігає ідеальну деревоподібну структуру (лінії гарантовано не перетнуться):
+
+Фрагмент коду
+erDiagram
+    movie ||--o{ session : scheduled_as
+    hall ||--o{ session : hosts
+    session ||--o{ ticket : includes
+    client ||--o{ ticket : buys
+
+    client {
+        uuid id PK
+        string *full_name
+        string *email
+        float money
+    }
+    movie {
+        uuid id PK
+        string *title
+        string *genre
+        int *duration_minutes
+        int age_rating
+    }
+    hall {
+        uuid id PK
+        string *name
+        int *capacity
+        boolean has_3d
+    }
+    session {
+        uuid id PK
+        uuid movie_id FK
+        uuid hall_id FK
+        datetime *start_time
+        string format
+    }
+    ticket {
+        uuid id PK
+        uuid session_id FK
+        uuid client_id FK
+        int *seat_number
+        float *price
+        boolean is_paid
+    }
