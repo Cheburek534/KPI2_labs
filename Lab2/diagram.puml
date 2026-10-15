@@ -1,0 +1,34 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+
+' Оголошення акторів
+actor "Користувач (Абстрактний)" as User
+actor "Клієнт" as Client
+actor "Адміністратор" as Admin
+
+' Оголошення прецедентів
+package "Система бронювання кінотеатру" {
+  usecase "UC1: Авторизація" as UC1
+  usecase "UC2: Купівля квитка" as UC2
+  usecase "UC3: Застосування знижки" as UC3
+  usecase "UC4: Повернення квитка" as UC4
+}
+
+' Наслідування акторів (Клієнт і Адмін успадковують властивості Користувача)
+User <|-- Client
+User <|-- Admin
+
+' Зв'язки акторів з прецедентами
+User --> UC1
+Client --> UC2
+Admin --> UC4
+
+' Відношення включення (ОБОВ'ЯЗКОВА умова)
+UC2 ..> UC1 : <<include>>
+UC4 ..> UC1 : <<include>>
+
+' Відношення розширення (ОПЦІОНАЛЬНА умова)
+UC3 ..> UC2 : <<extend>>
+
+@enduml
