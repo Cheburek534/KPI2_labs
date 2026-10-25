@@ -1,0 +1,34 @@
+sequenceDiagram
+    autonumber
+    actor Client as Клієнт
+    participant Site as Сайт
+    participant Booking as Сервіс бронювання
+    participant DB as База даних
+
+    Client->>Site: Натискає на обране місце
+    activate Site
+    
+    Site->>Booking: selectSeat(seatID, sessionID)
+    activate Booking
+    
+    Booking->>DB: checkStatusOfSeat(seatID)
+    activate DB
+    DB-->>Booking: статус місця
+    deactivate DB
+
+    alt статус == available
+        Booking->>DB: lockSeat(seatID, 15min)
+        activate DB
+        DB-->>Booking: підтвердження блокування
+        deactivate DB
+        
+        Booking-->>Site: success
+        Site-->>Client: Змінює колір на червоний, додає в кошик, таймер 15 хв
+    else статус == locked
+        Booking-->>Site: помилка (seatTaken)
+        Site-->>Client: Повідомлення "Місце вже зайнято", оновлює статус
+    end
+    
+    deactivate Booking
+    deactivate Site
+    
