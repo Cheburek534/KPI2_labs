@@ -1,0 +1,29 @@
+sequenceDiagram
+    autonumber
+    actor Client as Клієнт
+    participant Site as Сайт
+    participant Booking as Сервіс бронювання
+    participant DB as База даних
+
+    Client->>Site: Переходить до сторінки оплати
+    activate Site
+
+    opt Якщо клієнт вирішує застосувати знижку
+        Client->>Site: Вводить номер студентського та натискає "Застосувати"
+        
+        Site->>Booking: validateDiscount(studentCardID)
+        activate Booking
+        
+        Booking->>DB: verifyCard(studentCardID)
+        activate DB
+        DB-->>Booking: true (дійсний)
+        deactivate DB
+        
+        Booking->>Booking: calculateNewPrice(basePrice, discount)
+        Booking-->>Site: newPrice
+        deactivate Booking
+        
+        Site-->>Client: Оновлює інтерфейс, показуючи акційну ціну
+    end
+    
+    deactivate Site
