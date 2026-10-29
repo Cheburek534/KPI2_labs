@@ -5,25 +5,34 @@ sequenceDiagram
     participant Booking as Сервіс бронювання
     participant DB as База даних
 
-    Client->>Site: Переходить до сторінки оплати
+    %% Базовий потік: відкриття екрана розрахунку
+    Client->>Site: Перехід до оформлення замовлення
     activate Site
+    
+    Site->>Booking: getOrderSummary(orderID)
+    activate Booking
+    Booking-->>Site: orderDetails(basePrice)
+    deactivate Booking
+    Site-->>Client: Відображення повної вартості квитка
 
-    opt Якщо клієнт вирішує застосувати знижку
-        Client->>Site: Вводить номер студентського та натискає "Застосувати"
-        
+    %% Опціональний блок: застосовується лише якщо клієнт надає посвідчення
+    opt Клієнт бажає застосувати студентську знижку
+        Client->>Site: Введення номера студентського квитка
         Site->>Booking: validateDiscount(studentCardID)
         activate Booking
         
         Booking->>DB: verifyCard(studentCardID)
         activate DB
-        DB-->>Booking: true (дійсний)
+        DB-->>Booking: isValid: true
         deactivate DB
         
-        Booking->>Booking: calculateNewPrice(basePrice, discount)
-        Booking-->>Site: newPrice
+        Booking->>Booking: calculateDiscountPrice(basePrice, 0.2)
+        Booking-->>Site: discountedPrice
         deactivate Booking
         
-        Site-->>Client: Оновлює інтерфейс, показуючи акційну ціну
+        Site-->>Client: Відображення зниженої ціни
     end
-    
+
+    %% Продовження базового потоку
+    Client->>Site: Підтвердження фінальної суми
     deactivate Site
