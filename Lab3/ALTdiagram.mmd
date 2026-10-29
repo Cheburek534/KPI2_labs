@@ -5,6 +5,7 @@ sequenceDiagram
     participant Booking as Сервіс бронювання
     participant DB as База даних
 
+    %% Базовий потік до розгалуження
     Client->>Site: Натискає на обране місце
     activate Site
     
@@ -13,22 +14,23 @@ sequenceDiagram
     
     Booking->>DB: checkStatusOfSeat(seatID)
     activate DB
-    DB-->>Booking: статус місця
+    DB-->>Booking: seatStatus
     deactivate DB
 
-    alt статус == available
+    %% Локальний умовний блок: обробка результату
+    alt seatStatus == AVAILABLE
         Booking->>DB: lockSeat(seatID, 15min)
         activate DB
-        DB-->>Booking: підтвердження блокування
+        DB-->>Booking: lockSuccess
         deactivate DB
         
-        Booking-->>Site: success
-        Site-->>Client: Змінює колір на червоний, додає в кошик, таймер 15 хв
-    else статус == locked
-        Booking-->>Site: помилка (seatTaken)
-        Site-->>Client: Повідомлення "Місце вже зайнято", оновлює статус
+        Booking-->>Site: status: success
+        Site-->>Client: Зміна кольору місця, старт таймера 15 хв
+    else seatStatus == LOCKED
+        Booking-->>Site: status: error (seatTaken)
+        Site-->>Client: Повідомлення "Місце зайнято", оновлення карти
     end
     
+    %% Завершення базового потоку
     deactivate Booking
     deactivate Site
-    
