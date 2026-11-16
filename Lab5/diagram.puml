@@ -1,110 +1,83 @@
 @startuml
-' Вимикаємо ortho, бо він ламає порти і робить хаос із лініями
 skinparam componentStyle uml2
+skinparam nodesep 30
+skinparam ranksep 40
 
 actor "Клієнт" as Client
 
-rectangle "Cinema Ticket System (Межа системи)" {
+rectangle "Cinema Ticket System" {
     component "UI (Сайт кінотеатру)" as UI
     
-    component "Booking Backend (Сервіс бронювання)" as Backend {
+    component "Booking Backend" as Backend {
         portin "HTTP in" as pHttp
         portin "webhook in" as pWh
-        
-        portout "PSP out" as pPsp
-        portout "Email out" as pEmail
-        portout "Verification out" as pVer
-        portout "SQL out" as pSql
         
         package "1. API Layer" {
             component "Router" as Router
             component "Контролер\nбронювання" as BookingCtrl
             component "Контролер\nвебхуків" as WebhookCtrl
-            
-            ' Горизонтальне вирівнювання
-            Router -[hidden]right-> BookingCtrl
-            BookingCtrl -[hidden]right-> WebhookCtrl
         }
         
         package "2. Services Layer" {
+            component "Сервіс\nтаймер" as TimerSvc
             component "Сервіс\nбронювання" as BookingSvc
             component "Платіжний\nсервіс" as PaymentSvc
             component "Сервіс\nсповіщень" as NotificationSvc
-            component "Сервіс\nтаймер (Cron)" as TimerSvc
-            
-            ' Горизонтальне вирівнювання
-            BookingSvc -[hidden]right-> PaymentSvc
-            PaymentSvc -[hidden]right-> NotificationSvc
-            NotificationSvc -[hidden]right-> TimerSvc
         }
         
         package "3. Repositories Layer" {
-            component "ClientRepository" as ClientRepo
-            component "MovieRepository" as MovieRepo
-            component "HallRepository" as HallRepo
-            component "SessionRepository" as SessionRepo
-            component "TicketRepository" as TicketRepo
-            
-            ' Горизонтальне вирівнювання репозиторіїв
-            ClientRepo -[hidden]right-> MovieRepo
-            MovieRepo -[hidden]right-> HallRepo
-            HallRepo -[hidden]right-> SessionRepo
-            SessionRepo -[hidden]right-> TicketRepo
+            component "SessionRepo" as SessionRepo
+            component "TicketRepo" as TicketRepo
+            component "HallRepo" as HallRepo
+            component "ClientRepo" as ClientRepo
+            component "MovieRepo" as MovieRepo
         }
         
-        ' Вертикальне вирівнювання шарів
-        BookingCtrl -[hidden]down-> BookingSvc
-        BookingSvc -[hidden]down-> SessionRepo
+        portout "Verification out" as pVer
+        portout "PSP out" as pPsp
+        portout "Email out" as pEmail
+        portout "SQL out" as pSql
         
-        ' Внутрішні залежності шарів (згори донизу)
-        pHttp --> Router
-        pWh --> WebhookCtrl
+        ' --- Внутрішня маршрутизація (суворо згори донизу) ---
+        pHttp -down-> Router
+        pWh -down-> WebhookCtrl
         
-        Router ..> BookingCtrl
+        Router -down-> BookingCtrl
         
-        BookingCtrl ..> BookingSvc
-        WebhookCtrl ..> PaymentSvc
+        BookingCtrl -down-> BookingSvc
+        WebhookCtrl -down-> PaymentSvc
+        TimerSvc -right-> BookingSvc
         
-        TimerSvc ..> BookingSvc
-        BookingSvc ..> PaymentSvc
-        PaymentSvc ..> NotificationSvc
+        BookingSvc -right-> PaymentSvc
+        PaymentSvc -right-> NotificationSvc
         
-        BookingSvc ..> SessionRepo
-        BookingSvc ..> TicketRepo
-        BookingSvc ..> HallRepo
-        PaymentSvc ..> TicketRepo
-        PaymentSvc ..> ClientRepo
+        BookingSvc -down-> SessionRepo
+        BookingSvc -down-> TicketRepo
+        BookingSvc -down-> HallRepo
         
-        ' Зв'язки з вихідними портами
-        BookingSvc ..> pVer
-        PaymentSvc ..> pPsp
-        NotificationSvc ..> pEmail
+        PaymentSvc -down-> TicketRepo
+        PaymentSvc -down-> ClientRepo
         
-        ClientRepo ..> pSql
-        MovieRepo ..> pSql
-        HallRepo ..> pSql
-        SessionRepo ..> pSql
-        TicketRepo ..> pSql
+        ' Зв'язки до вихідних портів
+        BookingSvc -down-> pVer
+        PaymentSvc -down-> pPsp
+        NotificationSvc -down-> pEmail
+        
+        SessionRepo -down-> pSql
+        TicketRepo -down-> pSql
+        HallRepo -down-> pSql
+        ClientRepo -down-> pSql
+        MovieRepo -down-> pSql
     }
-    
-    database "База даних\nкінотеатру" as DB
-    
-    ' Фіксуємо БД чітко під бекендом
-    Backend -[hidden]down-> DB
+    database "База даних" as DB
 }
 
 ' Зовнішні системи
+component "Сервіс верифікації" <<external>> as VerSys
 component "Платіжний процесор" <<external>> as PP
 component "Поштовий сервіс" <<external>> as EmailSys
-component "Сервіс верифікації" <<external>> as VerSys
 
-' Фіксуємо зовнішні системи в один ряд внизу
-PP -[hidden]right-> EmailSys
-EmailSys -[hidden]right-> VerSys
-
-' ==========================================
-' ІНТЕРФЕЙСИ ТА ЗВ'ЯЗКИ (Суворо згори донизу)
-' ==========================================
+' --- Інтерфейси та зовнішні зв'язки ---
 
 Client -down-> UI
 
@@ -116,6 +89,10 @@ interface "Webhook" as IWh
 PP -up-( IWh
 IWh -up- pWh
 
+interface "Verification API" as IVer
+pVer -down-( IVer
+IVer -down- VerSys
+
 interface "Payments API" as IPP
 pPsp -down-( IPP
 IPP -down- PP
@@ -123,10 +100,6 @@ IPP -down- PP
 interface "Email API" as IEmail
 pEmail -down-( IEmail
 IEmail -down- EmailSys
-
-interface "Verification API" as IVer
-pVer -down-( IVer
-IVer -down- VerSys
 
 interface "SQL API" as ISql
 pSql -down-( ISql
