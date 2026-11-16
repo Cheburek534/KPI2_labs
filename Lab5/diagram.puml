@@ -1,0 +1,107 @@
+@startuml
+skinparam componentStyle uml2
+skinparam linetype ortho
+
+actor "Клієнт" as Client
+
+rectangle "Cinema Ticket System (Межа системи)" {
+    component "UI (Сайт кінотеатру)" as UI
+    
+    component "Booking Backend (Сервіс бронювання)" as Backend {
+        portin "HTTP in" as pHttp
+        portin "webhook in" as pWh
+        
+        portout "PSP out" as pPsp
+        portout "Email out" as pEmail
+        portout "Verification out" as pVer
+        portout "SQL out" as pSql
+        
+        package "1. API Layer" {
+            component "Router" as Router
+            component "Контролер\nбронювання" as BookingCtrl
+            component "Контролер\nвебхуків" as WebhookCtrl
+        }
+        
+        package "2. Services Layer" {
+            component "Сервіс\nбронювання" as BookingSvc
+            component "Платіжний\nсервіс" as PaymentSvc
+            component "Сервіс\nсповіщень" as NotificationSvc
+            component "Сервіс\nтаймер (Cron)" as TimerSvc
+        }
+        
+        package "3. Repositories Layer" {
+            component "ClientRepository" as ClientRepo
+            component "MovieRepository" as MovieRepo
+            component "HallRepository" as HallRepo
+            component "SessionRepository" as SessionRepo
+            component "TicketRepository" as TicketRepo
+        }
+        
+        ' Внутрішні залежності (пунктирні стрілки згори донизу)
+        pHttp --> Router
+        pWh --> WebhookCtrl
+        
+        Router ..> BookingCtrl
+        
+        BookingCtrl ..> BookingSvc
+        WebhookCtrl ..> PaymentSvc
+        
+        TimerSvc ..> BookingSvc
+        BookingSvc ..> PaymentSvc
+        PaymentSvc ..> NotificationSvc
+        
+        BookingSvc ..> SessionRepo
+        BookingSvc ..> TicketRepo
+        BookingSvc ..> HallRepo
+        PaymentSvc ..> TicketRepo
+        PaymentSvc ..> ClientRepo
+        
+        ' Зв'язки з вихідними портами
+        BookingSvc ..> pVer
+        PaymentSvc ..> pPsp
+        NotificationSvc ..> pEmail
+        
+        ClientRepo ..> pSql
+        MovieRepo ..> pSql
+        HallRepo ..> pSql
+        SessionRepo ..> pSql
+        TicketRepo ..> pSql
+    }
+    
+    database "База даних\nкінотеатру" as DB
+}
+
+' Зовнішні системи
+component "Платіжний процесор" <<external>> as PP
+component "Поштовий сервіс" <<external>> as EmailSys
+component "Сервіс верифікації" <<external>> as VerSys
+
+' Інтерфейси (Lollipop / Socket)
+interface "REST API" as IRest
+interface "Webhook" as IWh
+interface "Payments API" as IPP
+interface "Email API" as IEmail
+interface "Verification API" as IVer
+interface "SQL API" as ISql
+
+' Зв'язки поза межею бекенду
+Client --> UI
+UI --( IRest
+pHttp -up-() IRest
+
+PP --( IWh
+pWh -up-() IWh
+
+pPsp --( IPP
+PP -down-() IPP
+
+pEmail --( IEmail
+EmailSys -down-() IEmail
+
+pVer --( IVer
+VerSys -down-() IVer
+
+pSql --( ISql
+DB -down-() ISql
+
+@enduml
