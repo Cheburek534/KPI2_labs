@@ -1,6 +1,6 @@
 @startuml
+' Вимикаємо ortho, бо він ламає порти і робить хаос із лініями
 skinparam componentStyle uml2
-skinparam linetype ortho
 
 actor "Клієнт" as Client
 
@@ -20,6 +20,10 @@ rectangle "Cinema Ticket System (Межа системи)" {
             component "Router" as Router
             component "Контролер\nбронювання" as BookingCtrl
             component "Контролер\nвебхуків" as WebhookCtrl
+            
+            ' Горизонтальне вирівнювання
+            Router -[hidden]right-> BookingCtrl
+            BookingCtrl -[hidden]right-> WebhookCtrl
         }
         
         package "2. Services Layer" {
@@ -27,6 +31,11 @@ rectangle "Cinema Ticket System (Межа системи)" {
             component "Платіжний\nсервіс" as PaymentSvc
             component "Сервіс\nсповіщень" as NotificationSvc
             component "Сервіс\nтаймер (Cron)" as TimerSvc
+            
+            ' Горизонтальне вирівнювання
+            BookingSvc -[hidden]right-> PaymentSvc
+            PaymentSvc -[hidden]right-> NotificationSvc
+            NotificationSvc -[hidden]right-> TimerSvc
         }
         
         package "3. Repositories Layer" {
@@ -35,9 +44,19 @@ rectangle "Cinema Ticket System (Межа системи)" {
             component "HallRepository" as HallRepo
             component "SessionRepository" as SessionRepo
             component "TicketRepository" as TicketRepo
+            
+            ' Горизонтальне вирівнювання репозиторіїв
+            ClientRepo -[hidden]right-> MovieRepo
+            MovieRepo -[hidden]right-> HallRepo
+            HallRepo -[hidden]right-> SessionRepo
+            SessionRepo -[hidden]right-> TicketRepo
         }
         
-        ' Внутрішні залежності (пунктирні стрілки згори донизу)
+        ' Вертикальне вирівнювання шарів
+        BookingCtrl -[hidden]down-> BookingSvc
+        BookingSvc -[hidden]down-> SessionRepo
+        
+        ' Внутрішні залежності шарів (згори донизу)
         pHttp --> Router
         pWh --> WebhookCtrl
         
@@ -69,6 +88,9 @@ rectangle "Cinema Ticket System (Межа системи)" {
     }
     
     database "База даних\nкінотеатру" as DB
+    
+    ' Фіксуємо БД чітко під бекендом
+    Backend -[hidden]down-> DB
 }
 
 ' Зовнішні системи
@@ -76,32 +98,38 @@ component "Платіжний процесор" <<external>> as PP
 component "Поштовий сервіс" <<external>> as EmailSys
 component "Сервіс верифікації" <<external>> as VerSys
 
-' Інтерфейси (Lollipop / Socket)
+' Фіксуємо зовнішні системи в один ряд внизу
+PP -[hidden]right-> EmailSys
+EmailSys -[hidden]right-> VerSys
+
+' ==========================================
+' ІНТЕРФЕЙСИ ТА ЗВ'ЯЗКИ (Суворо згори донизу)
+' ==========================================
+
+Client -down-> UI
+
 interface "REST API" as IRest
+UI -down-( IRest
+IRest -down- pHttp
+
 interface "Webhook" as IWh
+PP -up-( IWh
+IWh -up- pWh
+
 interface "Payments API" as IPP
+pPsp -down-( IPP
+IPP -down- PP
+
 interface "Email API" as IEmail
+pEmail -down-( IEmail
+IEmail -down- EmailSys
+
 interface "Verification API" as IVer
+pVer -down-( IVer
+IVer -down- VerSys
+
 interface "SQL API" as ISql
-
-' Зв'язки поза межею бекенду
-Client --> UI
-UI --( IRest
-pHttp -up-() IRest
-
-PP --( IWh
-pWh -up-() IWh
-
-pPsp --( IPP
-PP -down-() IPP
-
-pEmail --( IEmail
-EmailSys -down-() IEmail
-
-pVer --( IVer
-VerSys -down-() IVer
-
-pSql --( ISql
-DB -down-() ISql
+pSql -down-( ISql
+ISql -down- DB
 
 @enduml
